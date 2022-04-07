@@ -1,77 +1,40 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:swat_poc/Widgets/button.dart';
 import 'dart:developer' as developer;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:dio/dio.dart';
 
 import 'package:swat_poc/Widgets/text_form_field_widget.dart';
 
-class Login extends StatefulWidget {
+class Login extends HookWidget {
   final FlutterSecureStorage storage;
-  const Login({Key? key, required this.storage}) : super(key: key);
 
-  @override
-  _LoginState createState() => _LoginState();
-}
+  Login({Key? key, required this.storage}) : super(key: key);
 
-class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
-  final _email = TextEditingController();
-  final _password = TextEditingController();
-  bool _isLoading = false;
-
-  late Animation<double> animation;
-  late AnimationController controller;
-
-  @override
-  void initState() {
-    super.initState();
-    controller = AnimationController(
-        duration: const Duration(milliseconds: 350), vsync: this);
-    animation = Tween<double>(begin: 0, end: 300).animate(controller)
-      ..addListener(() {
-        setState(() {
-          // The state that has changed here is the animation object’s value.
-        });
-      });
-    controller.forward();
-    checkToken();
-  }
-
-  _setIsLoading(bool value) {
-    setState(() {
-      _isLoading = value;
-    });
-  }
-
-  checkToken() async {
-    _setIsLoading(true);
-    String? token = await widget.storage.read(key: 'token');
+  _checkToken(BuildContext context, ValueNotifier isLoading) async {
+    isLoading.value = true;
+    String? token = await storage.read(key: 'token');
 
     if (token == null) {
       developer.log('checkToken > no token');
-      _setIsLoading(false);
+      isLoading.value = false;
       return;
     }
 
     developer.log('checkToken > $token');
-    Navigator.pushNamed(context, '/');
+    Navigator.popAndPushNamed(context, '/timesheet');
   }
 
-  signIn() {
-    developer.log('signIn');
-    Map<String, String> headers = {
-      'Content-Type': 'application/json',
-    };
-
+  _signIn(BuildContext context, ValueNotifier isLoading, String email,
+      String password) {
     if (_formKey.currentState!.validate()) {
-      _setIsLoading(true);
+      isLoading.value = true;
       Dio().post(
         'http://127.0.0.1:5050/login',
         data: {
-          'email': _email.text,
-          'password': _password.text,
+          'email': email,
+          'password': password,
         },
       ).then((response) {
         final token = response.data['token'];
@@ -79,12 +42,12 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
 
         if (statusCode != null && (statusCode >= 200 && statusCode <= 300)) {
           developer.log('Signed in with token: $token');
-          widget.storage.write(key: 'token', value: token);
-          Navigator.pushNamed(context, '/');
+          storage.write(key: 'token', value: token);
+          Navigator.popAndPushNamed(context, '/timesheet');
         }
       }).catchError((error) {
         developer.log('signIn > error: ${error.message}');
-        _setIsLoading(false);
+        isLoading.value = false;
 
         showDialog(
           context: context,
@@ -105,7 +68,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
         );
       });
 
-      _setIsLoading(false);
+      isLoading.value = false;
     }
   }
 
@@ -113,6 +76,23 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final animationController =
+        useAnimationController(duration: const Duration(milliseconds: 250));
+    final animation = useAnimation(
+        Tween<double>(begin: 0, end: 300).animate(animationController));
+    final isLoading = useState<bool>(false);
+    final email = useTextEditingController(text: '');
+    final password = useTextEditingController(text: '');
+
+    useEffect(() {
+      developer.log('use effect');
+      _checkToken(context, isLoading);
+    }, []);
+
+    if (animationController.status != AnimationStatus.completed) {
+      animationController.forward();
+    }
+
     return Scaffold(
       body: Container(
           decoration: const BoxDecoration(
@@ -128,7 +108,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Container(
-                height: animation.value,
+                height: animation,
                 width: double.infinity,
                 decoration: const BoxDecoration(
                   color: Colors.white,
@@ -171,7 +151,7 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                         }
                                         return null;
                                       },
-                                      controller: _email,
+                                      controller: email,
                                     ),
                                     TextFormFieldWidget(
                                       hintText: 'Password',
@@ -184,11 +164,12 @@ class _LoginState extends State<Login> with SingleTickerProviderStateMixin {
                                         }
                                         return null;
                                       },
-                                      controller: _password,
+                                      controller: password,
                                     ),
                                     ButtonWidget(
-                                      onPressed: signIn,
-                                      disabled: _isLoading,
+                                      onPressed: () => _signIn(context,
+                                          isLoading, email.text, password.text),
+                                      disabled: isLoading.value,
                                       text: 'Sign in',
                                     )
                                   ],

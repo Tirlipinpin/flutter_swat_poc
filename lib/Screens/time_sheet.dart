@@ -1,35 +1,62 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'dart:developer' as developer;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:dio/dio.dart';
+import 'package:swat_poc/Data/calendar.dart';
 
-import 'package:swat_poc/Screens/login.dart';
-
-class TimeSheet extends StatefulWidget {
+class TimeSheet extends HookWidget {
   final FlutterSecureStorage storage;
 
   const TimeSheet({Key? key, required this.storage}) : super(key: key);
 
-  @override
-  _TimeSheetState createState() => _TimeSheetState();
-}
+  logout(context) {
+    storage.deleteAll();
 
-class _TimeSheetState extends State<TimeSheet> {
-  logout() {
-    widget.storage.deleteAll();
+    Navigator.pushReplacementNamed(context, '/login');
+  }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => Login(storage: widget.storage)),
-    );
+  Future<Calendar> fetchCalendar(context) async {
+    final token = await storage.read(key: 'token');
+
+    if (token == null) {
+      developer.log('fetchCalendar > no token');
+      logout(context);
+      return Calendar.empty();
+    }
+
+    try {
+      developer.log('fetchCalendar > $token');
+
+      final response = await Dio().get('http://127.0.0.1:5050/calendar',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+            },
+          ));
+
+      developer.log('fetchCalendar > ${response.data}');
+      return Calendar.fromJson(response.data);
+    } catch (error) {
+      developer.log('fetchCalendar > error: ${error}');
+      // logout();
+      return Calendar.empty();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final calendar = useState<Calendar>(Calendar.empty());
+
+    useEffect(() async {
+      calendar.value = await fetchCalendar(context);
+    }, []);
+
     return Scaffold(
       appBar: AppBar(actions: [
         IconButton(
           icon: const Icon(Icons.logout),
-          onPressed: logout,
+          onPressed: () => logout(context),
         ),
       ]),
       body: Container(

@@ -30,10 +30,9 @@ class MyApp extends StatelessWidget {
           // is not restarted.
           primarySwatch: Colors.blue,
         ),
-        // home: Scaffold(body: Center(child: Login())),
         initialRoute: '/login',
         routes: {
-          '/': (context) => TimeSheet(storage: storage),
+          '/timesheet': (context) => TimeSheet(storage: storage),
           '/login': (context) => Login(storage: storage),
         });
   }
