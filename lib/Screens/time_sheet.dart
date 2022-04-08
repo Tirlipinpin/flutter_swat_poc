@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'dart:developer' as developer;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:dio/dio.dart';
 import 'package:swat_poc/Data/calendar.dart';
+import 'package:swat_poc/Repositories/calendars/repository.dart';
 
 class TimeSheet extends HookWidget {
   final FlutterSecureStorage storage;
+  final CalendarRepository calendarRepository;
 
-  const TimeSheet({Key? key, required this.storage}) : super(key: key);
+  const TimeSheet(
+      {Key? key, required this.storage, required this.calendarRepository})
+      : super(key: key);
 
   logout(context) {
     storage.deleteAll();
@@ -28,17 +31,9 @@ class TimeSheet extends HookWidget {
     try {
       developer.log('fetchCalendar > $token');
 
-      final response = await Dio().get('http://127.0.0.1:5050/calendar',
-          options: Options(
-            headers: {
-              'Authorization': 'Bearer $token',
-            },
-          ));
-
-      developer.log('fetchCalendar > ${response.data}');
-      return Calendar.fromJson(response.data);
+      return await calendarRepository.fetchCalendar(token);
     } catch (error) {
-      developer.log('fetchCalendar > error: ${error}');
+      developer.log('fetchCalendar > error: $error');
       // logout();
       return Calendar.empty();
     }
@@ -48,9 +43,8 @@ class TimeSheet extends HookWidget {
   Widget build(BuildContext context) {
     final calendar = useState<Calendar>(Calendar.empty());
 
-    useEffect(() async {
-      calendar.value = await fetchCalendar(context);
-    }, []);
+    // final future =
+    //     useFuture(fetchCalendar(context), initialData: Calendar.empty());
 
     return Scaffold(
       appBar: AppBar(actions: [
@@ -82,6 +76,10 @@ class TimeSheet extends HookWidget {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.abc_rounded),
+        onPressed: () async => calendar.value = await fetchCalendar(context),
       ),
     );
   }
