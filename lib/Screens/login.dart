@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:swat_poc/Repositories/login/repository.dart';
 import 'package:swat_poc/Widgets/button.dart';
 import 'dart:developer' as developer;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -9,8 +10,10 @@ import 'package:swat_poc/Widgets/text_form_field_widget.dart';
 
 class Login extends HookWidget {
   final FlutterSecureStorage storage;
+  final LoginRepository repository;
 
-  Login({Key? key, required this.storage}) : super(key: key);
+  Login({Key? key, required this.storage, required this.repository})
+      : super(key: key);
 
   _checkToken(BuildContext context, ValueNotifier isLoading) async {
     isLoading.value = true;
@@ -27,26 +30,15 @@ class Login extends HookWidget {
   }
 
   _signIn(BuildContext context, ValueNotifier isLoading, String email,
-      String password) {
+      String password) async {
     if (_formKey.currentState!.validate()) {
       isLoading.value = true;
-      Dio().post(
-        'http://127.0.0.1:5050/login',
-        data: {
-          'email': email,
-          'password': password,
-        },
-      ).then((response) {
-        final token = response.data['token'];
-        final statusCode = response.statusCode;
-
-        if (statusCode != null && (statusCode >= 200 && statusCode <= 300)) {
-          developer.log('Signed in with token: $token');
-          storage.write(key: 'token', value: token);
-          Navigator.popAndPushNamed(context, '/timesheet');
-        }
-      }).catchError((error) {
-        developer.log('signIn > error: ${error.message}');
+      try {
+        final token = await repository.signIn(email, password);
+        storage.write(key: 'token', value: token);
+        Navigator.popAndPushNamed(context, '/timesheet');
+      } on Exception catch (error) {
+        developer.log('signIn > error: $error');
         isLoading.value = false;
 
         showDialog(
@@ -54,7 +46,7 @@ class Login extends HookWidget {
           barrierDismissible: false,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text(error.message),
+              title: Text('$error'),
               actions: <Widget>[
                 TextButton(
                   child: const Text('Ok'),
@@ -66,7 +58,44 @@ class Login extends HookWidget {
             );
           },
         );
-      });
+      }
+      // Dio().post(
+      //   'http://127.0.0.1:5050/login',
+      //   data: {
+      //     'email': email,
+      //     'password': password,
+      //   },
+      // ).then((response) {
+      //   final token = response.data['token'];
+      //   final statusCode = response.statusCode;
+
+      //   if (statusCode != null && (statusCode >= 200 && statusCode <= 300)) {
+      //     developer.log('Signed in with token: $token');
+      //     storage.write(key: 'token', value: token);
+      //     Navigator.popAndPushNamed(context, '/timesheet');
+      //   }
+      // }).catchError((error) {
+      //   developer.log('signIn > error: ${error.message}');
+      //   isLoading.value = false;
+
+      //   showDialog(
+      //     context: context,
+      //     barrierDismissible: false,
+      //     builder: (BuildContext context) {
+      //       return AlertDialog(
+      //         title: Text(error.message),
+      //         actions: <Widget>[
+      //           TextButton(
+      //             child: const Text('Ok'),
+      //             onPressed: () {
+      //               Navigator.of(context).pop();
+      //             },
+      //           ),
+      //         ],
+      //       );
+      //     },
+      //   );
+      // });
 
       isLoading.value = false;
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:swat_poc/Repositories/calendars/http.dart';
+import 'package:swat_poc/Repositories/login/inMemory.dart';
 // import 'package:swat_poc/Repositories/calendars/inMemory.dart';
 
 import 'package:swat_poc/Screens/login.dart';
@@ -15,6 +16,7 @@ class MyApp extends StatelessWidget {
 
   final storage = const FlutterSecureStorage();
   final calendarRepository = HttpCalendarRepository();
+  final loginRepository = InMemoryLoginRepository();
 
   // This widget is the root of your application.
   @override
@@ -37,7 +39,8 @@ class MyApp extends StatelessWidget {
         routes: {
           '/timesheet': (context) => TimeSheet(
               storage: storage, calendarRepository: calendarRepository),
-          '/login': (context) => Login(storage: storage),
+          '/login': (context) =>
+              Login(storage: storage, repository: loginRepository),
         });
   }
 }
