@@ -10,11 +10,11 @@ class HttpCalendarRepository extends CalendarRepository {
   HttpCalendarRepository(this.storage);
 
   @override
-  Future<Calendar> fetchCalendar(String token) async {
+  Future<Calendar> fetchCalendar() async {
     final response = await Dio().get('http://127.0.0.1:5050/calendar',
         options: Options(
           headers: {
-            'Authorization': 'Bearer $token',
+            'Authorization': 'Bearer ${storage.read(key: 'token')}',
           },
         ));
 

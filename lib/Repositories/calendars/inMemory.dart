@@ -7,7 +7,7 @@ class InMemoryCalendarRepository extends CalendarRepository {
   InMemoryCalendarRepository() : calendar = Calendar.empty();
 
   @override
-  Future<Calendar> fetchCalendar(String token) async {
+  Future<Calendar> fetchCalendar() async {
     return Future.delayed(const Duration(seconds: 1), () => calendar);
   }
 }

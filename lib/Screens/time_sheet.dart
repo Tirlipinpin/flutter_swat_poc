@@ -29,9 +29,9 @@ class TimeSheet extends HookWidget {
     }
 
     try {
-      developer.log('fetchCalendar > $token');
+      developer.log('fetchCalendar...');
 
-      return await calendarRepository.fetchCalendar(token);
+      return await calendarRepository.fetchCalendar();
     } catch (error) {
       developer.log('fetchCalendar > error: $error');
       // logout();
@@ -43,8 +43,11 @@ class TimeSheet extends HookWidget {
   Widget build(BuildContext context) {
     final calendar = useState<Calendar>(Calendar.empty());
 
-    // final future =
-    //     useFuture(fetchCalendar(context), initialData: Calendar.empty());
+    useEffect(() {
+      fetchCalendar(context).then((value) {
+        calendar.value = value;
+      });
+    }, []);
 
     return Scaffold(
       appBar: AppBar(actions: [
@@ -76,10 +79,6 @@ class TimeSheet extends HookWidget {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.abc_rounded),
-        onPressed: () async => calendar.value = await fetchCalendar(context),
       ),
     );
   }
