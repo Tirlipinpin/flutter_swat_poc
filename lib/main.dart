@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:swat_poc/Repositories/calendars/inMemory.dart';
+import 'package:swat_poc/Repositories/calendars/http.dart';
+// import 'package:swat_poc/Repositories/calendars/inMemory.dart';
 
 import 'package:swat_poc/Screens/login.dart';
 import 'package:swat_poc/Screens/time_sheet.dart';
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
   MyApp({Key? key}) : super(key: key);
 
   final storage = const FlutterSecureStorage();
-  final calendarRepository = InMemoryCalendarRepository();
+  final calendarRepository = HttpCalendarRepository();
 
   // This widget is the root of your application.
   @override
