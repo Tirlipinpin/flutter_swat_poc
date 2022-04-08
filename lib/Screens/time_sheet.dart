@@ -3,7 +3,9 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'dart:developer' as developer;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:swat_poc/Data/calendar.dart';
+import 'package:swat_poc/Data/project.dart';
 import 'package:swat_poc/Repositories/calendars/repository.dart';
+import 'package:swat_poc/Widgets/cell.dart';
 
 class TimeSheet extends HookWidget {
   final FlutterSecureStorage storage;
@@ -34,18 +36,34 @@ class TimeSheet extends HookWidget {
       return await calendarRepository.fetchCalendar();
     } catch (error) {
       developer.log('fetchCalendar > error: $error');
-      // logout();
       return const Calendar.empty();
     }
+  }
+
+  String getValueForCell(
+      ValueNotifier<Calendar> calendar, Project project, int day) {
+    final list = calendar.value.assignments
+        .where((assignment) =>
+            assignment.projectId == project.id &&
+            assignment.date.weekday == day)
+        .toList();
+
+    if (list.isNotEmpty) {
+      return '${list[0].hours}';
+    }
+
+    return '';
   }
 
   @override
   Widget build(BuildContext context) {
     final calendar = useState<Calendar>(const Calendar.empty());
+    final int weekOfYear = 24;
 
     useEffect(() {
       fetchCalendar(context).then((value) {
         calendar.value = value;
+        developer.log('fetchCalendar > calendar: ${value.projects}');
       });
     }, []);
 
@@ -56,30 +74,56 @@ class TimeSheet extends HookWidget {
           onPressed: () => logout(context),
         ),
       ]),
-      body: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text(
-                    'Time Sheet',
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                ],
-              ),
+      body: Column(children: [
+        Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text('Semaine $weekOfYear')),
+        Table(
+          defaultColumnWidth: const FlexColumnWidth(1.0),
+          children: <TableRow>[
+            const TableRow(
+              children: <Widget>[
+                Cell(value: ''),
+                Cell(value: 'Lundi'),
+                Cell(value: 'Mardi'),
+                Cell(value: 'Mercredi'),
+                Cell(value: 'Jeudi'),
+                Cell(value: 'Vendredi'),
+                Cell(value: 'Samedi'),
+                Cell(value: 'Dimanche'),
+              ],
             ),
+            ...calendar.value.projects.map((project) {
+              return TableRow(
+                children: <Widget>[
+                  Cell(value: project.name, ellipsis: true),
+                  Cell(
+                      value:
+                          getValueForCell(calendar, project, DateTime.monday)),
+                  Cell(
+                      value:
+                          getValueForCell(calendar, project, DateTime.tuesday)),
+                  Cell(
+                      value: getValueForCell(
+                          calendar, project, DateTime.wednesday)),
+                  Cell(
+                      value: getValueForCell(
+                          calendar, project, DateTime.thursday)),
+                  Cell(
+                      value:
+                          getValueForCell(calendar, project, DateTime.friday)),
+                  Cell(
+                      value: getValueForCell(
+                          calendar, project, DateTime.saturday)),
+                  Cell(
+                      value:
+                          getValueForCell(calendar, project, DateTime.sunday)),
+                ],
+              );
+            }).toList(),
           ],
-        ),
-      ),
+        )
+      ]),
     );
   }
 }

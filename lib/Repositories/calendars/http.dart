@@ -15,7 +15,7 @@ class HttpCalendarRepository extends CalendarRepository {
     final http = await HttpService().getHttpService();
     final response = await http.get('http://127.0.0.1:5050/calendar');
 
-    developer.log('fetchCalendar > ${response.data}');
+    developer.log('fetchCalendar > HTTP > ${response.data}');
     return Calendar.fromJson(response.data);
   }
 }

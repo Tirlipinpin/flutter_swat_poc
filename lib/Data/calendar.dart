@@ -1,5 +1,6 @@
 import 'package:swat_poc/Data/project.dart';
 import 'package:swat_poc/Data/assignment.dart';
+import 'package:week_of_year/week_of_year.dart';
 
 class Calendar {
   final List<Project> projects;
@@ -17,4 +18,10 @@ class Calendar {
             assignments: (json['assignments'] as List<dynamic>)
                 .map((assignment) => Assignment.fromJson(assignment))
                 .toList());
+
+  List<Assignment> getAssignmentsForWeek(int week) {
+    return assignments
+        .where((assignment) => assignment.date.weekOfYear == week)
+        .toList();
+  }
 }
