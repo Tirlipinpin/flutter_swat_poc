@@ -16,6 +16,7 @@ class InMemoryCalendarRepository extends CalendarRepository {
             )
           ],
           assignments: [],
+          weekOfYear: 24,
         );
 
   @override
