@@ -25,7 +25,7 @@ class TimeSheet extends HookWidget {
     if (token == null) {
       developer.log('fetchCalendar > no token');
       logout(context);
-      return Calendar.empty();
+      return const Calendar.empty();
     }
 
     try {
@@ -35,13 +35,13 @@ class TimeSheet extends HookWidget {
     } catch (error) {
       developer.log('fetchCalendar > error: $error');
       // logout();
-      return Calendar.empty();
+      return const Calendar.empty();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final calendar = useState<Calendar>(Calendar.empty());
+    final calendar = useState<Calendar>(const Calendar.empty());
 
     useEffect(() {
       fetchCalendar(context).then((value) {
