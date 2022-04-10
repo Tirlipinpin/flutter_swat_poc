@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'dart:developer' as developer;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:swat_poc/Data/calendar.dart';
@@ -35,9 +34,8 @@ class TimeSheet extends HookConsumerWidget {
     }
   }
 
-  String getValueForCell(
-      ValueNotifier<Calendar> calendar, Project project, int day) {
-    final list = calendar.value.assignments
+  String getValueForCell(Calendar calendar, Project project, int day) {
+    final list = calendar.assignments
         .where((assignment) =>
             assignment.projectId == project.id &&
             assignment.date.weekday == day)
@@ -52,15 +50,7 @@ class TimeSheet extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final calendar = useState<Calendar>(const Calendar.empty());
-    final int weekOfYear = 24;
-
-    useEffect(() {
-      fetchCalendar(context, ref).then((value) {
-        calendar.value = value;
-        developer.log('fetchCalendar > calendar: ${value.projects}');
-      });
-    }, []);
+    final calendar = ref.watch(calendarStateProvider);
 
     return Scaffold(
       appBar: AppBar(actions: [
@@ -72,7 +62,7 @@ class TimeSheet extends HookConsumerWidget {
       body: Column(children: [
         Padding(
             padding: const EdgeInsets.all(8),
-            child: Text('Semaine $weekOfYear')),
+            child: Text('Semaine ${calendar.weekOfYear}')),
         Table(
           defaultColumnWidth: const FlexColumnWidth(1.0),
           children: <TableRow>[
@@ -88,7 +78,7 @@ class TimeSheet extends HookConsumerWidget {
                 Cell(value: 'Dimanche'),
               ],
             ),
-            ...calendar.value.projects.map((project) {
+            ...calendar.projects.map((project) {
               return TableRow(
                 children: <Widget>[
                   Cell(value: project.name, ellipsis: true),

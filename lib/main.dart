@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:swat_poc/Data/calendar.dart';
 // import 'package:swat_poc/Repositories/calendars/http.dart';
 import 'package:swat_poc/Repositories/calendars/inMemory.dart';
 import 'package:swat_poc/Repositories/login/inMemory.dart';
@@ -8,22 +9,31 @@ import 'package:swat_poc/Repositories/login/inMemory.dart';
 
 import 'package:swat_poc/Screens/login.dart';
 import 'package:swat_poc/Screens/time_sheet.dart';
+import 'package:swat_poc/state/calendar.dart';
 
 final loginRepositoryProvider = Provider((_) => InMemoryLoginRepository());
+
 final calendarRepositoryProvider =
     Provider((_) => InMemoryCalendarRepository());
+
 final storageProvider = Provider((_) => const FlutterSecureStorage());
+
+final calendarStateProvider =
+    StateNotifierProvider<CalendarState, Calendar>((ref) {
+  return CalendarState(
+      calendarRepository: ref.read(calendarRepositoryProvider));
+});
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends HookConsumerWidget {
   const MyApp({Key? key}) : super(key: key);
 
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
         title: 'SWAT POC',
         theme: ThemeData(
@@ -40,7 +50,10 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: '/login',
         routes: {
-          '/timesheet': (context) => const TimeSheet(),
+          '/timesheet': (context) {
+            ref.read(calendarStateProvider.notifier).load();
+            return const TimeSheet();
+          },
           '/login': (context) => Login(),
         });
   }
