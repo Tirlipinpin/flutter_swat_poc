@@ -27,4 +27,8 @@ class Calendar {
                 .map((assignment) => Assignment.fromJson(assignment))
                 .toList(),
             weekOfYear: json['week']);
+
+  bool get isEmpty {
+    return id == "";
+  }
 }

@@ -59,56 +59,58 @@ class TimeSheet extends HookConsumerWidget {
           onPressed: () => logout(context, ref),
         ),
       ]),
-      body: Column(children: [
-        Padding(
-            padding: const EdgeInsets.all(8),
-            child: Text('Semaine ${calendar.weekOfYear}')),
-        Table(
-          defaultColumnWidth: const FlexColumnWidth(1.0),
-          children: <TableRow>[
-            const TableRow(
-              children: <Widget>[
-                Cell(value: ''),
-                Cell(value: 'Lundi'),
-                Cell(value: 'Mardi'),
-                Cell(value: 'Mercredi'),
-                Cell(value: 'Jeudi'),
-                Cell(value: 'Vendredi'),
-                Cell(value: 'Samedi'),
-                Cell(value: 'Dimanche'),
-              ],
-            ),
-            ...calendar.projects.map((project) {
-              return TableRow(
-                children: <Widget>[
-                  Cell(value: project.name, ellipsis: true),
-                  Cell(
-                      value:
-                          getValueForCell(calendar, project, DateTime.monday)),
-                  Cell(
-                      value:
-                          getValueForCell(calendar, project, DateTime.tuesday)),
-                  Cell(
-                      value: getValueForCell(
-                          calendar, project, DateTime.wednesday)),
-                  Cell(
-                      value: getValueForCell(
-                          calendar, project, DateTime.thursday)),
-                  Cell(
-                      value:
-                          getValueForCell(calendar, project, DateTime.friday)),
-                  Cell(
-                      value: getValueForCell(
-                          calendar, project, DateTime.saturday)),
-                  Cell(
-                      value:
-                          getValueForCell(calendar, project, DateTime.sunday)),
+      body: calendar.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : Column(children: [
+              Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text('Semaine ${calendar.weekOfYear}')),
+              Table(
+                defaultColumnWidth: const FlexColumnWidth(1.0),
+                children: <TableRow>[
+                  const TableRow(
+                    children: <Widget>[
+                      Cell(value: ''),
+                      Cell(value: 'Lundi'),
+                      Cell(value: 'Mardi'),
+                      Cell(value: 'Mercredi'),
+                      Cell(value: 'Jeudi'),
+                      Cell(value: 'Vendredi'),
+                      Cell(value: 'Samedi'),
+                      Cell(value: 'Dimanche'),
+                    ],
+                  ),
+                  ...calendar.projects.map((project) {
+                    return TableRow(
+                      children: <Widget>[
+                        Cell(value: project.name, ellipsis: true),
+                        Cell(
+                            value: getValueForCell(
+                                calendar, project, DateTime.monday)),
+                        Cell(
+                            value: getValueForCell(
+                                calendar, project, DateTime.tuesday)),
+                        Cell(
+                            value: getValueForCell(
+                                calendar, project, DateTime.wednesday)),
+                        Cell(
+                            value: getValueForCell(
+                                calendar, project, DateTime.thursday)),
+                        Cell(
+                            value: getValueForCell(
+                                calendar, project, DateTime.friday)),
+                        Cell(
+                            value: getValueForCell(
+                                calendar, project, DateTime.saturday)),
+                        Cell(
+                            value: getValueForCell(
+                                calendar, project, DateTime.sunday)),
+                      ],
+                    );
+                  }).toList(),
                 ],
-              );
-            }).toList(),
-          ],
-        )
-      ]),
+              )
+            ]),
     );
   }
 }
