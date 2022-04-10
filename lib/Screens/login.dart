@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:swat_poc/Repositories/login/repository.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:swat_poc/Widgets/button.dart';
 import 'dart:developer' as developer;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:dio/dio.dart';
 
 import 'package:swat_poc/Widgets/text_form_field_widget.dart';
+import 'package:swat_poc/main.dart';
 
-class Login extends HookWidget {
-  final FlutterSecureStorage storage;
-  final LoginRepository repository;
+class Login extends HookConsumerWidget {
+  Login({Key? key}) : super(key: key);
 
-  Login({Key? key, required this.storage, required this.repository})
-      : super(key: key);
-
-  _checkToken(BuildContext context, ValueNotifier isLoading) async {
+  _checkToken(
+      BuildContext context, WidgetRef ref, ValueNotifier isLoading) async {
     isLoading.value = true;
-    String? token = await storage.read(key: 'token');
+    String? token = await ref.read(storageProvider).read(key: 'token');
 
     if (token == null) {
       developer.log('checkToken > no token');
@@ -29,13 +25,14 @@ class Login extends HookWidget {
     Navigator.popAndPushNamed(context, '/timesheet');
   }
 
-  _signIn(BuildContext context, ValueNotifier isLoading, String email,
-      String password) async {
+  _signIn(BuildContext context, WidgetRef ref, ValueNotifier isLoading,
+      String email, String password) async {
     if (_formKey.currentState!.validate()) {
       isLoading.value = true;
       try {
-        final token = await repository.signIn(email, password);
-        storage.write(key: 'token', value: token);
+        final token =
+            await ref.read(loginRepositoryProvider).signIn(email, password);
+        ref.read(storageProvider).write(key: 'token', value: token);
         Navigator.popAndPushNamed(context, '/timesheet');
       } on Exception catch (error) {
         developer.log('signIn > error: $error');
@@ -104,7 +101,7 @@ class Login extends HookWidget {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final animationController =
         useAnimationController(duration: const Duration(milliseconds: 250));
     final animation = useAnimation(
@@ -115,7 +112,7 @@ class Login extends HookWidget {
 
     useEffect(() {
       developer.log('use effect');
-      _checkToken(context, isLoading);
+      _checkToken(context, ref, isLoading);
     }, []);
 
     if (animationController.status != AnimationStatus.completed) {
@@ -196,7 +193,7 @@ class Login extends HookWidget {
                                       controller: password,
                                     ),
                                     ButtonWidget(
-                                      onPressed: () => _signIn(context,
+                                      onPressed: () => _signIn(context, ref,
                                           isLoading, email.text, password.text),
                                       disabled: isLoading.value,
                                       text: 'Sign in',

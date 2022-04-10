@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:swat_poc/Repositories/calendars/http.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+// import 'package:swat_poc/Repositories/calendars/http.dart';
+import 'package:swat_poc/Repositories/calendars/inMemory.dart';
 import 'package:swat_poc/Repositories/login/inMemory.dart';
 // import 'package:swat_poc/Repositories/calendars/inMemory.dart';
 
 import 'package:swat_poc/Screens/login.dart';
 import 'package:swat_poc/Screens/time_sheet.dart';
 
+final loginRepositoryProvider = Provider((_) => InMemoryLoginRepository());
+final calendarRepositoryProvider =
+    Provider((_) => InMemoryCalendarRepository());
+final storageProvider = Provider((_) => const FlutterSecureStorage());
+
 void main() {
-  runApp(MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({Key? key}) : super(key: key);
-
-  final storage = const FlutterSecureStorage();
-  final calendarRepository = HttpCalendarRepository();
-  final loginRepository = InMemoryLoginRepository();
+  const MyApp({Key? key}) : super(key: key);
 
   // This widget is the root of your application.
   @override
@@ -37,10 +40,8 @@ class MyApp extends StatelessWidget {
         ),
         initialRoute: '/login',
         routes: {
-          '/timesheet': (context) => TimeSheet(
-              storage: storage, calendarRepository: calendarRepository),
-          '/login': (context) =>
-              Login(storage: storage, repository: loginRepository),
+          '/timesheet': (context) => const TimeSheet(),
+          '/login': (context) => Login(),
         });
   }
 }
