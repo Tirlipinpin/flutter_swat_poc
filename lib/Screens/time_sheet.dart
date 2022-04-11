@@ -8,12 +8,8 @@ import 'package:swat_poc/main.dart';
 import 'package:swat_poc/state/calendar.dart';
 
 class TimeSheet extends HookConsumerWidget {
-  const TimeSheet({Key? key}) : super(key: key);
-
-  logout(BuildContext context, WidgetRef ref) {
-    ref.read(authStateProvider.notifier).logOut();
-
-    Navigator.pushReplacementNamed(context, '/login');
+  TimeSheet({Key? key}) : super(key: key) {
+    // ref.read(calendarStateProvider.notifier).load();
   }
 
   Future<Calendar> fetchCalendar(BuildContext context, WidgetRef ref) async {
@@ -43,13 +39,14 @@ class TimeSheet extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    developer.log('TimeSheet > build');
     final calendarState = ref.watch(calendarStateProvider);
 
     return Scaffold(
       appBar: AppBar(actions: [
         IconButton(
           icon: const Icon(Icons.logout),
-          onPressed: () => logout(context, ref),
+          onPressed: ref.read(authStateProvider.notifier).logout,
         ),
       ]),
       body: calendarState.isLoading
