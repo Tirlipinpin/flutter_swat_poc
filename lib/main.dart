@@ -4,20 +4,23 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:swat_poc/Repositories/calendars/http.dart';
 import 'package:swat_poc/Repositories/calendars/inMemory.dart';
+import 'package:swat_poc/Repositories/login/http.dart';
 // import 'package:swat_poc/Repositories/calendars/http.dart';
 import 'package:swat_poc/Repositories/login/inMemory.dart';
 // import 'package:swat_poc/Repositories/calendars/inMemory.dart';
+import 'dart:developer' as developer;
 
 import 'package:swat_poc/Screens/login.dart';
+import 'package:swat_poc/Screens/splash_screen.dart';
 import 'package:swat_poc/Screens/time_sheet.dart';
 import 'package:swat_poc/state/auth.dart';
 import 'package:swat_poc/state/calendar.dart';
 
-final authStateProvider = StateNotifierProvider<AuthStateNotifier, String>(
+final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>(
   (ref) {
     final authState = AuthStateNotifier(
       flutterSecureStorage: const FlutterSecureStorage(),
-      loginRepository: InMemoryLoginRepository(),
+      loginRepository: HttpLoginRepository(),
     );
     authState.checkToken();
     return authState;
@@ -25,26 +28,41 @@ final authStateProvider = StateNotifierProvider<AuthStateNotifier, String>(
 );
 
 final dioProvider = Provider<Dio>((ref) {
-  final token = ref.watch(authStateProvider);
-  if (token.isEmpty) {
-    throw UnimplementedError();
+  final authState = ref.watch(authStateProvider);
+  if (authState.token == null) {
+    developer.log('dioProvider > token is null');
+    return Dio(BaseOptions(
+      baseUrl: 'http://127.0.0.1:5050',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ));
   }
 
-  return Dio(BaseOptions(
+  final dio = Dio(BaseOptions(
     baseUrl: 'http://127.0.0.1:5050',
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Authorization': 'Bearer $token'
+      'Authorization': 'Bearer ${authState.token}'
     },
   ));
+  dio.interceptors.add(InterceptorsWrapper(onError: (DioError e, handler) {
+    if (e.response?.statusCode == 401) {
+      ref.read(authStateProvider.notifier).logout();
+    }
+    return handler.next(e);
+  }));
+
+  return dio;
 });
 
-// final calendarRepositoryProvider =
-//     Provider((ref) => HttpCalendarRepository(http: ref.watch(dioProvider)));
-
 final calendarRepositoryProvider =
-    Provider((ref) => InMemoryCalendarRepository());
+    Provider((ref) => HttpCalendarRepository(http: ref.watch(dioProvider)));
+
+// final calendarRepositoryProvider =
+//     Provider((ref) => InMemoryCalendarRepository());
 
 final calendarStateProvider =
     StateNotifierProvider<CalendarStateNotifier, CalendarState>((ref) {
@@ -76,13 +94,14 @@ class MyApp extends HookConsumerWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      initialRoute: '/login',
+      initialRoute: '/splash',
       routes: {
         '/timesheet': (context) {
           ref.read(calendarStateProvider.notifier).load();
-          return const TimeSheet();
+          return TimeSheet();
         },
         '/login': (context) => Login(),
+        '/splash': (context) => const SplashScreen(),
       },
     );
   }
