@@ -10,19 +10,15 @@ import 'package:swat_poc/main.dart';
 class Login extends HookConsumerWidget {
   Login({Key? key}) : super(key: key);
 
-  _checkToken(
-      BuildContext context, WidgetRef ref, ValueNotifier isLoading) async {
-    isLoading.value = true;
-    String? token = await ref.read(storageProvider).read(key: 'token');
-
-    if (token == null) {
+  _checkToken(BuildContext context, WidgetRef ref, ValueNotifier isLoading) {
+    if (ref.read(authStateProvider.notifier).hasToken) {
+      developer
+          .log('checkToken > ${ref.read(authStateProvider.notifier).token}');
+      Navigator.popAndPushNamed(context, '/timesheet');
+    } else {
       developer.log('checkToken > no token');
-      isLoading.value = false;
       return;
     }
-
-    developer.log('checkToken > $token');
-    Navigator.popAndPushNamed(context, '/timesheet');
   }
 
   _signIn(BuildContext context, WidgetRef ref, ValueNotifier isLoading,
@@ -30,9 +26,7 @@ class Login extends HookConsumerWidget {
     if (_formKey.currentState!.validate()) {
       isLoading.value = true;
       try {
-        final token =
-            await ref.read(loginRepositoryProvider).signIn(email, password);
-        ref.read(storageProvider).write(key: 'token', value: token);
+        ref.read(authStateProvider.notifier).signIn(email, password);
         Navigator.popAndPushNamed(context, '/timesheet');
       } on Exception catch (error) {
         developer.log('signIn > error: $error');
@@ -193,8 +187,13 @@ class Login extends HookConsumerWidget {
                                       controller: password,
                                     ),
                                     ButtonWidget(
-                                      onPressed: () => _signIn(context, ref,
-                                          isLoading, email.text, password.text),
+                                      onPressed: () => _signIn(
+                                        context,
+                                        ref,
+                                        isLoading,
+                                        email.text.trim(),
+                                        password.text,
+                                      ),
                                       disabled: isLoading.value,
                                       text: 'Sign in',
                                     )

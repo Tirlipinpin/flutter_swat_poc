@@ -5,25 +5,18 @@ import 'package:swat_poc/Data/calendar.dart';
 import 'package:swat_poc/Data/project.dart';
 import 'package:swat_poc/Widgets/cell.dart';
 import 'package:swat_poc/main.dart';
+import 'package:swat_poc/state/calendar.dart';
 
 class TimeSheet extends HookConsumerWidget {
   const TimeSheet({Key? key}) : super(key: key);
 
   logout(BuildContext context, WidgetRef ref) {
-    ref.read(storageProvider).deleteAll();
+    ref.read(authStateProvider.notifier).logOut();
 
     Navigator.pushReplacementNamed(context, '/login');
   }
 
   Future<Calendar> fetchCalendar(BuildContext context, WidgetRef ref) async {
-    final token = await ref.read(storageProvider).read(key: 'token');
-
-    if (token == null) {
-      developer.log('fetchCalendar > no token');
-      logout(context, ref);
-      return const Calendar.empty();
-    }
-
     try {
       developer.log('fetchCalendar...');
 
@@ -34,7 +27,7 @@ class TimeSheet extends HookConsumerWidget {
     }
   }
 
-  String getValueForCell(Calendar calendar, Project project, int day) {
+  String getValueForCell(CalendarState calendar, Project project, int day) {
     final list = calendar.assignments
         .where((assignment) =>
             assignment.projectId == project.id &&
@@ -50,7 +43,7 @@ class TimeSheet extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final calendar = ref.watch(calendarStateProvider);
+    final calendarState = ref.watch(calendarStateProvider);
 
     return Scaffold(
       appBar: AppBar(actions: [
@@ -59,12 +52,12 @@ class TimeSheet extends HookConsumerWidget {
           onPressed: () => logout(context, ref),
         ),
       ]),
-      body: calendar.isEmpty
+      body: calendarState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(children: [
               Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Text('Semaine ${calendar.weekOfYear}')),
+                  child: Text('Semaine ${calendarState.weekOfYear}')),
               Table(
                 defaultColumnWidth: const FlexColumnWidth(1.0),
                 children: <TableRow>[
@@ -80,31 +73,31 @@ class TimeSheet extends HookConsumerWidget {
                       Cell(value: 'Dimanche'),
                     ],
                   ),
-                  ...calendar.projects.map((project) {
+                  ...calendarState.projects.map((project) {
                     return TableRow(
                       children: <Widget>[
                         Cell(value: project.name, ellipsis: true),
                         Cell(
                             value: getValueForCell(
-                                calendar, project, DateTime.monday)),
+                                calendarState, project, DateTime.monday)),
                         Cell(
                             value: getValueForCell(
-                                calendar, project, DateTime.tuesday)),
+                                calendarState, project, DateTime.tuesday)),
                         Cell(
                             value: getValueForCell(
-                                calendar, project, DateTime.wednesday)),
+                                calendarState, project, DateTime.wednesday)),
                         Cell(
                             value: getValueForCell(
-                                calendar, project, DateTime.thursday)),
+                                calendarState, project, DateTime.thursday)),
                         Cell(
                             value: getValueForCell(
-                                calendar, project, DateTime.friday)),
+                                calendarState, project, DateTime.friday)),
                         Cell(
                             value: getValueForCell(
-                                calendar, project, DateTime.saturday)),
+                                calendarState, project, DateTime.saturday)),
                         Cell(
                             value: getValueForCell(
-                                calendar, project, DateTime.sunday)),
+                                calendarState, project, DateTime.sunday)),
                       ],
                     );
                   }).toList(),
