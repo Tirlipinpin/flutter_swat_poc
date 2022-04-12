@@ -1,9 +1,25 @@
 import 'dart:async';
 
+import 'package:swat_poc/Data/calendar_day.dart';
 import 'package:swat_poc/Data/calendar.dart';
+import 'package:swat_poc/Data/project.dart';
 import 'package:swat_poc/Repositories/calendars/repository.dart';
-import 'package:swat_poc/state/calendar.dart';
 import 'dart:developer' as developer;
+
+class CalendarState {
+  final bool isLoading;
+  final Calendar calendar;
+
+  const CalendarState({required this.isLoading, required this.calendar});
+
+  const CalendarState.loading()
+      : this(isLoading: true, calendar: const Calendar.empty());
+
+  List<Project>? get projects => calendar.projects;
+  List<CalendarDay>? get days => calendar.days;
+  bool get isEmpty => calendar.isEmpty;
+  DateTime? get firstDay => calendar.firstDay;
+}
 
 class CalendarService {
   final CalendarRepository calendarRepository;
@@ -14,37 +30,23 @@ class CalendarService {
       : _controller = StreamController(),
         current = const Calendar.empty();
 
+  Stream<CalendarState> get stream => _controller.stream;
+
   Future<void> load(DateTime date) async {
-    developer.log("CalendarService > loading assigments of $date");
+    developer.log("CalendarService > loading calendar");
     _controller.add(const CalendarState.loading());
     final calendar = await calendarRepository.fetchCalendar(date);
-    current = calendar;
+    current = Calendar.from(calendar);
     _controller.add(CalendarState(isLoading: false, calendar: calendar));
-    developer.log("CalendarService > assignemnts of $date loaded");
+    developer.log("CalendarService > calendar loaded");
   }
 
-  Future<void> setAssignment(String project, int hours) async {
-    developer.log("CalendarService > setting $hours for project $project");
+  Future<void> setAssignment(DateTime date, Project project, int hours) async {
+    developer.log("CalendarService > setting $hours for project ${project.id}");
     _controller.add(const CalendarState.loading());
-    final statusCode = await calendarRepository.assign(current, project, hours);
-    developer.log('setAssignment > status code: $statusCode');
+    final newCalendar = await calendarRepository.assign(date, project, hours);
 
-    List<MapEntry<String, int>> newAssignments =
-        List.from(current.assignments!).map(
-      (e) {
-        final entry = e as MapEntry<String, int>;
-        if (entry.key == project) {
-          return MapEntry(entry.key, hours);
-        }
-        return entry;
-      },
-    ).toList();
-
-    final calendar = Calendar(
-      id: current.id,
-      date: current.date,
-      assignments: newAssignments,
-    );
-    _controller.add(CalendarState(isLoading: false, calendar: calendar));
+    current = Calendar.from(newCalendar);
+    _controller.add(CalendarState(isLoading: false, calendar: newCalendar));
   }
 }

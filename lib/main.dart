@@ -8,28 +8,32 @@ import 'package:swat_poc/Repositories/login/http.dart';
 import 'package:swat_poc/Screens/splash_screen.dart';
 import 'package:swat_poc/state/auth.dart';
 import 'package:swat_poc/state/auth_new.dart';
-import 'package:swat_poc/state/calendar.dart';
+import 'package:swat_poc/state/calendar_new.dart';
 
-final urlProvider = Provider<String>((ref) => "http://10.8.0.22:5050");
+final urlProvider = Provider<String>((ref) => "http://127.0.0.1:5050");
 
-final authStateProvider = Provider(
-  (ref) {
-    return AuthService(
-      flutterSecureStorage: const FlutterSecureStorage(),
-      loginRepository: HttpLoginRepository(url: ref.watch(urlProvider)),
-    )..checkToken();
-  },
+final authServiceProvider = Provider(
+  (ref) => AuthService(
+    flutterSecureStorage: const FlutterSecureStorage(),
+    loginRepository: HttpLoginRepository(url: ref.watch(urlProvider)),
+  )..checkToken(),
 );
 
 final authStateStreamProvider = StreamProvider(
-  (ref) => ref.watch(authStateProvider).stream,
+  (ref) => ref.watch(authServiceProvider).stream,
 );
 
 final dioProvider = Provider<Dio>((ref) {
   return ref.watch(authStateStreamProvider).when(
         data: (AuthState authState) {
           if (!authState.hasToken) {
-            return Dio();
+            return Dio(BaseOptions(
+              baseUrl: ref.watch(urlProvider),
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+            ));
           }
           final dio = Dio(BaseOptions(
             baseUrl: ref.watch(urlProvider),
@@ -42,15 +46,27 @@ final dioProvider = Provider<Dio>((ref) {
           dio.interceptors
               .add(InterceptorsWrapper(onError: (DioError e, handler) {
             if (e.response?.statusCode == 401) {
-              ref.read(authStateProvider).logout();
+              ref.read(authServiceProvider).logout();
             }
             return handler.next(e);
           }));
 
           return dio;
         },
-        error: (error, stacktrace) => Dio(),
-        loading: () => Dio(),
+        error: (error, stacktrace) => Dio(BaseOptions(
+          baseUrl: ref.watch(urlProvider),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        )),
+        loading: () => Dio(BaseOptions(
+          baseUrl: ref.watch(urlProvider),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        )),
       );
 });
 
@@ -60,12 +76,19 @@ final calendarRepositoryProvider =
 // final calendarRepositoryProvider =
 //     Provider((ref) => InMemoryCalendarRepository());
 
-final calendarStateProvider =
-    StateNotifierProvider<CalendarStateNotifier, AsyncValue<CalendarState>>(
-        (ref) {
-  return CalendarStateNotifier(
-      calendarRepository: ref.read(calendarRepositoryProvider));
-});
+final calendarServiceProvider = Provider(
+  (ref) => CalendarService(
+      calendarRepository: ref.watch(calendarRepositoryProvider)),
+);
+
+final calendarStateStreamProvider =
+    StreamProvider((ref) => ref.watch(calendarServiceProvider).stream);
+// final calendarStateProvider =
+//     StateNotifierProvider<CalendarStateNotifier, AsyncValue<CalendarState>>(
+//         (ref) {
+//   return CalendarStateNotifier(
+//       calendarRepository: ref.read(calendarRepositoryProvider));
+// });
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));

@@ -1,6 +1,7 @@
 import 'package:swat_poc/Data/calendar.dart';
+import 'package:swat_poc/Data/project.dart';
 
 abstract class CalendarRepository {
   Future<Calendar> fetchCalendar(DateTime date);
-  Future<int> assign(Calendar calendar, String projectName, int hours);
+  Future<Calendar> assign(DateTime date, Project project, int hours);
 }

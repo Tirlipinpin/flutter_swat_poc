@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:swat_poc/Screens/login.dart';
-import 'package:swat_poc/Screens/time_sheet_new.dart';
+// import 'package:swat_poc/Screens/time_sheet_new.dart';
+import 'package:swat_poc/Screens/time_sheet_view.dart';
 import 'package:swat_poc/main.dart';
 import 'dart:developer' as developer;
 
@@ -34,8 +35,8 @@ class SplashScreen extends HookConsumerWidget {
             );
           }
           if (data.hasToken) {
-            ref.read(calendarStateProvider.notifier).load(DateTime.now());
-            return const TimeSheet();
+            ref.read(calendarServiceProvider).load(DateTime.now());
+            return const TimeSheetView();
           } else {
             return Login();
           }

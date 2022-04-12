@@ -45,9 +45,8 @@ class AuthService {
     _controller.add(AuthState.loading());
     final token = await flutterSecureStorage.read(key: 'token');
     await Future.delayed(const Duration(seconds: 1));
-    developer.log('checkToken, $token');
     if (token != null) {
-      developer.log('checkToken > not null');
+      developer.log('AuthService > checkToken > $token');
       _controller.add(AuthState.loggedIn(token: token));
     } else {
       _controller.add(AuthState.loggedOut());

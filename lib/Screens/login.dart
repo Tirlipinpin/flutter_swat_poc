@@ -14,7 +14,7 @@ class Login extends HookConsumerWidget {
       String password) async {
     if (_formKey.currentState!.validate()) {
       try {
-        ref.read(authStateProvider).signIn(email, password);
+        ref.read(authServiceProvider).signIn(email, password);
       } on Exception catch (error) {
         developer.log('signIn > error: $error');
 
