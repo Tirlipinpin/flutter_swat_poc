@@ -1,34 +1,31 @@
-import 'package:swat_poc/Data/project.dart';
-import 'package:swat_poc/Data/assignment.dart';
-
 class Calendar {
-  final String id;
-  final int weekOfYear;
-  final List<Project> projects;
-  final List<Assignment> assignments;
+  final String? id;
+  final DateTime? date;
+  final List<MapEntry<String, int>>? assignments;
 
   const Calendar({
     required this.id,
-    required this.projects,
+    required this.date,
     required this.assignments,
-    required this.weekOfYear,
   });
 
-  const Calendar.empty()
-      : this(id: "", projects: const [], assignments: const [], weekOfYear: -1);
+  const Calendar.empty() : this(id: null, date: null, assignments: null);
 
   Calendar.fromJson(Map<String, dynamic> json)
       : this(
-            id: json['id'],
-            projects: (json['projects'] as List<dynamic>)
-                .map((project) => Project.fromJson(project))
-                .toList(),
-            assignments: (json['assignments'] as List<dynamic>)
-                .map((assignment) => Assignment.fromJson(assignment))
-                .toList(),
-            weekOfYear: json['week']);
+          id: json['id'],
+          date: json['date'],
+          assignments:
+              (json['assignments'] as Map<String, int>).entries.toList(),
+        );
+
+  Calendar.from(Calendar other)
+      : this(
+            id: other.id,
+            date: other.date,
+            assignments: List.from(other.assignments!));
 
   bool get isEmpty {
-    return id == "";
+    return id == null;
   }
 }
