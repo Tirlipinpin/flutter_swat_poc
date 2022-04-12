@@ -10,11 +10,11 @@ import 'package:swat_poc/main.dart';
 class Login extends HookConsumerWidget {
   Login({Key? key}) : super(key: key);
 
-  _signIn(BuildContext context, WidgetRef ref, String email,
+  Future<void> _signIn(BuildContext context, WidgetRef ref, String email,
       String password) async {
     if (_formKey.currentState!.validate()) {
       try {
-        ref.read(authStateProvider.notifier).signIn(email, password);
+        ref.read(authStateProvider).signIn(email, password);
       } on Exception catch (error) {
         developer.log('signIn > error: $error');
 
@@ -43,117 +43,123 @@ class Login extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    developer.log("login > build");
     final animationController =
         useAnimationController(duration: const Duration(milliseconds: 250));
     final animation = useAnimation(
         Tween<double>(begin: 0, end: 300).animate(animationController));
     final email = useTextEditingController(text: '');
     final password = useTextEditingController(text: '');
-    final authState = ref.watch(authStateProvider);
+    final isLoading = useState(false);
 
     if (animationController.status != AnimationStatus.completed) {
       animationController.forward();
     }
 
+    if (isLoading.value) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
-      body: authState.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Container(
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            alignment: Alignment.topCenter,
+            fit: BoxFit.fill,
+            image: NetworkImage(
+              'https://voyage-onirique.com/wp-content/uploads/2020/01/656579-1120x630.jpg',
+            ),
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Container(
+              height: animation,
+              width: double.infinity,
               decoration: const BoxDecoration(
-                image: DecorationImage(
-                  alignment: Alignment.topCenter,
-                  fit: BoxFit.fill,
-                  image: NetworkImage(
-                    'https://voyage-onirique.com/wp-content/uploads/2020/01/656579-1120x630.jpg',
-                  ),
-                ),
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(15),
+                    topRight: Radius.circular(15)),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    height: animation,
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(15),
-                          topRight: Radius.circular(15)),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(15.0),
+              child: Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Form(
+                      key: _formKey,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Form(
-                            key: _formKey,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20.0),
-                                    child: Column(
-                                      children: [
-                                        Container(
-                                          margin:
-                                              const EdgeInsets.only(bottom: 15),
-                                          child: const Text(
-                                            'Login',
-                                            style: TextStyle(
-                                                fontSize: 30,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                        TextFormFieldWidget(
-                                          hintText: 'Email',
-                                          validator: (String? value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter some text';
-                                            } else if (!value.contains('@')) {
-                                              return 'Please enter a valid email';
-                                            }
-                                            return null;
-                                          },
-                                          controller: email,
-                                        ),
-                                        TextFormFieldWidget(
-                                          hintText: 'Password',
-                                          obscureText: true,
-                                          autocorrect: false,
-                                          enableSuggestions: false,
-                                          validator: (String? value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter your password';
-                                            }
-                                            return null;
-                                          },
-                                          controller: password,
-                                        ),
-                                        ButtonWidget(
-                                          onPressed: () => _signIn(
-                                            context,
-                                            ref,
-                                            email.text.trim(),
-                                            password.text,
-                                          ),
-                                          disabled: authState.isLoading,
-                                          text: 'Sign in',
-                                        )
-                                      ],
-                                    )),
-                              ],
-                            ),
-                          ),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20.0),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 15),
+                                    child: const Text(
+                                      'Login',
+                                      style: TextStyle(
+                                          fontSize: 30,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  TextFormFieldWidget(
+                                    hintText: 'Email',
+                                    validator: (String? value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter some text';
+                                      } else if (!value.contains('@')) {
+                                        return 'Please enter a valid email';
+                                      }
+                                      return null;
+                                    },
+                                    controller: email,
+                                  ),
+                                  TextFormFieldWidget(
+                                    hintText: 'Password',
+                                    obscureText: true,
+                                    autocorrect: false,
+                                    enableSuggestions: false,
+                                    validator: (String? value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter your password';
+                                      }
+                                      return null;
+                                    },
+                                    controller: password,
+                                  ),
+                                  ButtonWidget(
+                                    onPressed: () {
+                                      isLoading.value = true;
+                                      _signIn(
+                                        context,
+                                        ref,
+                                        email.text.trim(),
+                                        password.text,
+                                      );
+                                      isLoading.value = false;
+                                    },
+                                    text: 'Sign in',
+                                  )
+                                ],
+                              )),
                         ],
                       ),
                     ),
-                  )
-                ],
-              )),
+                  ],
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
     );
   }
 }

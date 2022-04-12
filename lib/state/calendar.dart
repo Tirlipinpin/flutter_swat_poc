@@ -1,8 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:swat_poc/Data/assignment.dart';
 import 'package:swat_poc/Data/calendar.dart';
-import 'package:swat_poc/Data/project.dart';
 import 'package:swat_poc/Repositories/calendars/repository.dart';
+import 'dart:developer' as developer;
 
 class CalendarState {
   final bool isLoading;
@@ -10,35 +9,55 @@ class CalendarState {
 
   const CalendarState({required this.isLoading, required this.calendar});
 
-  String get id => calendar.id;
-  int get weekOfYear => calendar.weekOfYear;
-  List<Project> get projects => calendar.projects;
-  List<Assignment> get assignments => calendar.assignments;
+  const CalendarState.loading()
+      : this(isLoading: true, calendar: const Calendar.empty());
+
+  String? get id => calendar.id;
+  DateTime? get date => calendar.date;
+  List<MapEntry<String, int>>? get assignments => calendar.assignments;
+  int? get total => assignments!
+      .map((assignment) => assignment.value)
+      .reduce((value, element) => value + element);
+  bool get isEmpty => calendar.isEmpty;
 }
 
-class CalendarStateNotifier extends StateNotifier<CalendarState> {
+class CalendarStateNotifier extends StateNotifier<AsyncValue<CalendarState>> {
   final CalendarRepository calendarRepository;
 
   CalendarStateNotifier({required this.calendarRepository})
-      : super(
-            const CalendarState(isLoading: false, calendar: Calendar.empty()));
+      : super(const AsyncValue.loading());
 
-  void load() async {
-    state = CalendarState(isLoading: true, calendar: state.calendar);
-    final calendar = await calendarRepository.fetchCalendar();
-    state = CalendarState(isLoading: false, calendar: calendar);
+  Future<void> load(DateTime date) async {
+    // state = const AsyncValue.loading();
+    final calendar = await calendarRepository.fetchCalendar(date);
+    state =
+        AsyncValue.data(CalendarState(isLoading: false, calendar: calendar));
+    return;
   }
 
-  void setAssignment(Project project, int dayOfWeek, int hours) async {
-    state = CalendarState(isLoading: true, calendar: state.calendar);
-    final assignment = await calendarRepository.assign(
-        state.calendar, project, dayOfWeek, hours);
-    var calendar = Calendar(
-      id: state.calendar.id,
-      projects: state.calendar.projects,
-      assignments: [...state.calendar.assignments, assignment],
-      weekOfYear: state.calendar.weekOfYear,
+  Future<void> setAssignment(String project, int hours) async {
+    // state = const AsyncValue.loading();
+    final statusCode =
+        await calendarRepository.assign(state.value!.calendar, project, hours);
+    developer.log('setAssignment > status code: $statusCode');
+
+    List<MapEntry<String, int>> newAssignments =
+        List.from(state.value!.assignments!).map(
+      (e) {
+        final entry = e as MapEntry<String, int>;
+        if (entry.key == project) {
+          return MapEntry(entry.key, hours);
+        }
+        return entry;
+      },
+    ).toList();
+
+    final calendar = Calendar(
+      id: state.value!.id,
+      date: state.value!.date,
+      assignments: newAssignments,
     );
-    state = CalendarState(isLoading: false, calendar: calendar);
+    state =
+        AsyncValue.data(CalendarState(isLoading: false, calendar: calendar));
   }
 }

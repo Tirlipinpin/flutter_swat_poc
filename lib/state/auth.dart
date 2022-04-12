@@ -9,6 +9,13 @@ class AuthState {
 
   AuthState({required this.token, required this.isLoading});
 
+  AuthState.loading() : this(isLoading: true, token: null);
+
+  AuthState.loggedIn({required String token})
+      : this(isLoading: false, token: token);
+
+  AuthState.loggedOut() : this(isLoading: false, token: null);
+
   bool get hasToken => token != null;
 }
 
