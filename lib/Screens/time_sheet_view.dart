@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:swat_poc/Data/assignment.dart';
+import 'package:swat_poc/Data/calendar_day.dart';
 import 'package:swat_poc/Data/project.dart';
+import 'package:swat_poc/Screens/day_detail.dart';
+import 'package:swat_poc/Screens/time_sheet_day.dart';
 import 'package:swat_poc/Widgets/button.dart';
 import 'package:swat_poc/Widgets/cell.dart';
 import 'package:swat_poc/main.dart';
@@ -30,12 +33,25 @@ class TimeSheetView extends HookConsumerWidget {
     ref.read(calendarServiceProvider).setAssignment(date, project, hours);
   }
 
+  void handleCellTap(BuildContext context, CalendarDay calendarDay) {
+    developer.log('[Cell Tap] date: ${calendarDay.date}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => CalendarDayView(calendarDay: calendarDay)),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final calendarStreamState = ref.watch(calendarStateStreamProvider);
 
     return Scaffold(
       appBar: AppBar(actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: () => ref.read(dioProvider).post('/test-401', data: {}),
+        ),
         IconButton(
           icon: const Icon(Icons.logout),
           onPressed: ref.read(authServiceProvider).logout,
@@ -49,48 +65,76 @@ class TimeSheetView extends HookConsumerWidget {
           if (state.isEmpty) {
             return const Center(child: Text("No data"));
           }
-          return Column(children: [
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text('Semaine ${state.firstDay!.weekOfYear}'),
-            ),
-            SingleChildScrollView(
+          return RefreshIndicator(
+            triggerMode: RefreshIndicatorTriggerMode.anywhere,
+            color: Colors.blue,
+            backgroundColor: Colors.white,
+            onRefresh: () =>
+                ref.read(calendarServiceProvider).load(DateTime.now()),
+            child: SingleChildScrollView(
               scrollDirection: Axis.vertical,
-              child: Table(
-                defaultColumnWidth: const FlexColumnWidth(1.0),
-                children: <TableRow>[
-                  const TableRow(
-                    children: <Widget>[
-                      Cell(value: ''),
-                      Cell(value: 'Lundi'),
-                      Cell(value: 'Mardi'),
-                      Cell(value: 'Mercredi'),
-                      Cell(value: 'Jeudi'),
-                      Cell(value: 'Vendredi'),
-                      Cell(value: 'Samedi'),
-                      Cell(value: 'Dimanche'),
-                    ],
-                  ),
-                  ...state.projects!.map((project) {
-                    return TableRow(
+              child: Column(children: [
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text('Semaine ${state.firstDay!.weekOfYear}'),
+                ),
+                Table(
+                  defaultColumnWidth: const FlexColumnWidth(1.0),
+                  children: <TableRow>[
+                    TableRow(
                       children: <Widget>[
-                        Cell(value: project.name, ellipsis: true),
-                        ...(state.days!.map((day) {
-                          return Cell(
-                            enabled: true,
-                            value:
-                                getValueForCell(day.assignments!, project.id),
-                            onEdit: (hours) =>
-                                onCellEdit(ref, project, day.date, hours),
-                          );
-                        }).toList()),
+                        const Cell(value: ''),
+                        Cell(
+                            value: 'Lundi',
+                            onTap: () =>
+                                handleCellTap(context, state.days![0])),
+                        Cell(
+                            value: 'Mardi',
+                            onTap: () =>
+                                handleCellTap(context, state.days![1])),
+                        Cell(
+                            value: 'Mercredi',
+                            onTap: () =>
+                                handleCellTap(context, state.days![2])),
+                        Cell(
+                            value: 'Jeudi',
+                            onTap: () =>
+                                handleCellTap(context, state.days![3])),
+                        Cell(
+                            value: 'Vendredi',
+                            onTap: () =>
+                                handleCellTap(context, state.days![4])),
+                        Cell(
+                            value: 'Samedi',
+                            onTap: () =>
+                                handleCellTap(context, state.days![5])),
+                        Cell(
+                            value: 'Dimanche',
+                            onTap: () =>
+                                handleCellTap(context, state.days![6])),
                       ],
-                    );
-                  }).toList(),
-                ],
-              ),
-            )
-          ]);
+                    ),
+                    ...state.projects!.map((project) {
+                      return TableRow(
+                        children: <Widget>[
+                          Cell(value: project.name, ellipsis: true),
+                          ...(state.days!.map((day) {
+                            return Cell(
+                              enabled: true,
+                              value:
+                                  getValueForCell(day.assignments!, project.id),
+                              onEdit: (hours) =>
+                                  onCellEdit(ref, project, day.date, hours),
+                            );
+                          }).toList()),
+                        ],
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ]),
+            ),
+          );
         },
         error: (Object error, StackTrace? stackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
