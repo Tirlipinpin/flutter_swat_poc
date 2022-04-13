@@ -10,7 +10,8 @@ import 'package:swat_poc/state/auth.dart';
 import 'package:swat_poc/state/auth_new.dart';
 import 'package:swat_poc/state/calendar_new.dart';
 
-final urlProvider = Provider<String>((ref) => "http://127.0.0.1:5050");
+final urlProvider =
+    Provider<String>((ref) => "https://flutter-swat-poc.herokuapp.com");
 
 final authServiceProvider = Provider(
   (ref) => AuthService(

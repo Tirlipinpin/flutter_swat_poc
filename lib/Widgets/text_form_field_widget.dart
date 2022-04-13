@@ -6,7 +6,9 @@ class TextFormFieldWidget extends StatelessWidget {
   final bool enableSuggestions;
   final bool autocorrect;
   final String? Function(String?)? validator;
+  final Function(String)? onFieldSubmitted;
   final TextEditingController controller;
+  final TextInputAction textInputAction;
 
   const TextFormFieldWidget(
       {Key? key,
@@ -15,7 +17,9 @@ class TextFormFieldWidget extends StatelessWidget {
       this.enableSuggestions = true,
       this.autocorrect = true,
       this.validator,
-      required this.controller})
+      required this.controller,
+      this.textInputAction = TextInputAction.done,
+      this.onFieldSubmitted})
       : super(key: key);
 
   @override
@@ -36,6 +40,8 @@ class TextFormFieldWidget extends StatelessWidget {
                   hintText: hintText,
                   hintStyle: const TextStyle(fontSize: 18, color: Colors.grey),
                   border: InputBorder.none),
+              textInputAction: textInputAction,
+              onFieldSubmitted: onFieldSubmitted,
               style: const TextStyle(fontSize: 18),
               validator: validator,
               controller: controller,

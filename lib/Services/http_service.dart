@@ -11,11 +11,13 @@ class HttpService {
     final token = await storage.read(key: 'token');
 
     developer.log('getHttpService > $token');
-    Dio dio = Dio(BaseOptions(baseUrl: 'http://127.0.0.1:5050', headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer $token'
-    }));
+    Dio dio = Dio(BaseOptions(
+        baseUrl: 'https://flutter-swat-poc.herokuapp.com',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token'
+        }));
 
     return dio;
   }

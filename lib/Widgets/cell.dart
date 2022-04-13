@@ -49,10 +49,12 @@ class Cell extends HookWidget {
                   : TextField(
                       autocorrect: false,
                       enabled: enabled,
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          signed: true, decimal: true),
                       onEditingComplete: () =>
                           handleEditingComplete(valueController.text.trim()),
                       controller: valueController,
+                      textInputAction: TextInputAction.done,
                     )),
         ),
       ),

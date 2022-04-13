@@ -121,20 +121,26 @@ class Login extends HookConsumerWidget {
                                       return null;
                                     },
                                     controller: email,
+                                    textInputAction: TextInputAction.next,
                                   ),
                                   TextFormFieldWidget(
-                                    hintText: 'Password',
-                                    obscureText: true,
-                                    autocorrect: false,
-                                    enableSuggestions: false,
-                                    validator: (String? value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter your password';
-                                      }
-                                      return null;
-                                    },
-                                    controller: password,
-                                  ),
+                                      hintText: 'Password',
+                                      obscureText: true,
+                                      autocorrect: false,
+                                      enableSuggestions: false,
+                                      validator: (String? value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter your password';
+                                        }
+                                        return null;
+                                      },
+                                      controller: password,
+                                      onFieldSubmitted: (String value) {
+                                        isLoading.value = true;
+                                        _signIn(context, ref, email.text.trim(),
+                                            password.text);
+                                        isLoading.value = false;
+                                      }),
                                   ButtonWidget(
                                     onPressed: () {
                                       isLoading.value = true;

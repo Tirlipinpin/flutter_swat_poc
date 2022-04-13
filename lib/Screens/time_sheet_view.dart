@@ -47,7 +47,7 @@ class TimeSheetView extends HookConsumerWidget {
     final calendarStreamState = ref.watch(calendarStateStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(actions: [
+      appBar: AppBar(title: const Text('Time Sheet'), actions: [
         IconButton(
           icon: const Icon(Icons.refresh),
           onPressed: () => ref.read(dioProvider).post('/test-401', data: {}),
